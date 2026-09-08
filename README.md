@@ -1,6 +1,7 @@
 ### Features & Automation
 
- ## Prerequisites\n\nYou must be connected as root.
+ ## Prerequisites
+    You must be connected as root.
 ```bash
  apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
  ```
