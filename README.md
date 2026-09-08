@@ -34,8 +34,8 @@ i made a personnal script for install azerothcore and compile when finish. This 
     cd /root
     ./finalize.sh
     ```
-  * **Important:** Once `finalize.sh` has completed its work, you must start the server before doing the next configuration steps.
-  * Then follow the manual steps below to configure your databases, set up your accounts, and launch the server.
+  * **Important:** Once `finalize.sh` has completed its work, you must start the server using the `start` command before proceeding with the configuration steps.
+  * Then follow the manual steps below to configure your databases and set up your accounts.
 
 * **0. Download the Game Client (Recommended First)**
   * Download the WotLK 3.3.5a client (17GB) from ChromieCraft and extract it to your fastest drive: [ChromieCraft Downloads](https://www.chromiecraft.com/en/downloads/)
