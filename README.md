@@ -23,7 +23,7 @@ Also, you can easily update AzerothCore and Playerbots by typing update, and upd
 * **Core & Modules Management**: 
   * Clones the main AzerothCore repository (Playerbot branch).
   * Automatically adds and integrates the custom modules that I use: 
-    * [`mod-individual-progression`](https://github.com/azerothcore/mod-individual-progression)
+    * [`mod-individual-progression`](https://github.com/ZhengPeiRu21/mod-individual-progression)
     * [`mod-ah-bot`](https://github.com/azerothcore/mod-ah-bot)
     * [`mod-dungeon-clear`](https://github.com/jrad7/mod-dungeon-clear)
     * [`mod-multibot-bridge`](https://github.com/Wishmaster117/mod-multibot-bridge)
