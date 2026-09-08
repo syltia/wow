@@ -3,7 +3,6 @@ set -e
 
 echo "--- 1. Updating Debian and installing dependencies ---"
 apt update && apt upgrade -y
-apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
 
 echo "--- 2. Configuring SSH ---"
 sed -ie '0,/#PermitRootLogin prohibit-password/s/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
