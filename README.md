@@ -1,6 +1,6 @@
 ### Features & Automation
 
-sed -i '1i # Prerequisites\n\nYou must be logged in as root.\n' README.md
+1i ## Prerequisites\n\nYou must be connected as root.\n'
 
 i made a personnal script for install azerothcore and compile when finish. This custom script automates the complete setup and deployment of an [**AzerothCore**](https://github.com/azerothcore/azerothcore-wotlk) server with custom modules that I use on a fresh Debian VM (debian-13.6.0 by 09/08/26).
 
