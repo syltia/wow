@@ -1,6 +1,6 @@
 ### Features & Automation
 
-1i ## Prerequisites\n\nYou must be connected as root.\n'
+ ## Prerequisites\n\nYou must be connected as root.
 
 i made a personnal script for install azerothcore and compile when finish. This custom script automates the complete setup and deployment of an [**AzerothCore**](https://github.com/azerothcore/azerothcore-wotlk) server with custom modules that I use on a fresh Debian VM (debian-13.6.0 by 09/08/26).
 
