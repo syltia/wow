@@ -7,7 +7,7 @@
  ```
 i made a personnal script for install azerothcore and compile when finish. This custom script automates the complete setup and deployment of an [**AzerothCore**](https://github.com/azerothcore/azerothcore-wotlk) server with custom modules that I use on a fresh Debian VM (debian-13.6.0 by 09/08/26).
 ### Features & Automation
-* **System & Dependencies**: Updates Debian and installs all required packages (`git`, `curl`, `unzip`, `p7zip-full`, `sudo`, `tmux`, `net-tools`, `php`, `php-mysqli`).
+* **System & Dependencies**: Updates Debian and installs all required packages.
 * **SSH & GRUB Optimization**: 
   * Configures SSH to allow root access if needed.
   * Tweaks **GRUB** settings (`GRUB_DEFAULT=1` and `GRUB_TIMEOUT=0`) to speed up system boot times by skipping the boot menu.
