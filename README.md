@@ -108,6 +108,4 @@ Also, you can easily update AzerothCore and Playerbots by typing update, and upd
     * Enter your character's GUID found earlier.
     * *(Save with `CTRL+S`, exit with `CTRL+X`)*
 
-⌨️ Custom Bash Aliases (Quick Reference)
-
 i follow this guide https://youtu.be/UG900F19GPk. Thank you, nirv!
