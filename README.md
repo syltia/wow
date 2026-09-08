@@ -12,8 +12,8 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * Automatically adds and integrates the custom modules that I use: 
     * [`mod-individual-progression`](https://github.com/azerothcore/mod-individual-progression)
     * [`mod-ah-bot`](https://github.com/azerothcore/mod-ah-bot)
-    * [`mod-dungeon-clear`](https://github.com/azerothcore/mod-dungeon-clear)
-    * [`mod-multibot-bridge`](https://github.com/azerothcore/mod-multibot-bridge)
+    * [`mod-dungeon-clear`](https://github.com/jrad7/mod-dungeon-clear)
+    * [`mod-multibot-bridge`](https://github.com/Wishmaster117/mod-multibot-bridge)
     * [`mod-account-mounts`](https://github.com/azerothcore/mod-account-mounts)
 * **Server Management & `tmux` Integration**: 
   * Generates a `/root/start.sh` script that automatically launches both the `authserver` and `worldserver` inside isolated `tmux` sessions (`auth-session` and `world-session`).
@@ -28,10 +28,15 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * `qqq`: Instant server shutdown (debian) shortcut (`sudo shutdown now`).
    
 * **Compilation & Manual Post-Setup Steps:**
-  * The script automatically handles the dependency installation (`./acore.sh install-deps`) and triggers the full compilation process (you **must** press **y** when prompted, otherwise the compilation will not start).
-  * Once the automated script finishes compiling, follow the manual steps below to configure your databases, set up your accounts, and launch the server.
+  * The script automatically handles the dependency installation (`./acore.sh install-deps`), downloads the `finalize.sh` script into `/root`, and triggers the full compilation process (you **must** press **y** when prompted, otherwise the compilation will not start).
+  * Once the automated script finishes compiling, run the finalization script:
+    ```bash
+    cd /root
+    ./finalize.sh
+    ```
+  * Then follow the manual steps below to configure your databases, set up your accounts, and launch the server.
 
- * **0. Download the Game Client (Recommended First)**
+* **0. Download the Game Client (Recommended First)**
   * Download the WotLK 3.3.5a client (17GB) from ChromieCraft and extract it to your fastest drive: [ChromieCraft Downloads](https://www.chromiecraft.com/en/downloads/)
   * *(Doing this now lets it download while you handle the server setup below!)*
 
