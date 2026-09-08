@@ -1,7 +1,6 @@
-
-
  ## Prerequisites
-     You must be connected as root, To start the installation, simply run:
+  You must be connected as root, To start the installation, simply run:
+
 ```bash
  ./setup.sh
  ```
