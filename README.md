@@ -1,13 +1,15 @@
- ## Prerequisites
-  You must be connected as root, To start the installation, simply run:
+## Prerequisites
+
+You must be connected as root. First, make sure to install the required packages:
 
 ```bash
- ./setup.sh
+apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
  ```
-Then;
+Then, to start the installation, simply run:
 ```bash
- apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
+./setup.sh
  ```
+
 i made a personnal script for install azerothcore and compile when finish. This custom script automates the complete setup and deployment of an [**AzerothCore**](https://github.com/azerothcore/azerothcore-wotlk) server with custom modules that I use on a fresh Debian VM (debian-13.6.0 by 09/08/26).
 
 Also, you can easily update AzerothCore and Playerbots by typing update, and update all your custom modules at once using updatemods!
