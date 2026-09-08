@@ -110,30 +110,4 @@ Also, you can easily update AzerothCore and Playerbots by typing update, and upd
 
 ⌨️ Custom Bash Aliases (Quick Reference)
 
-Once installed, you can use these shortcuts directly in your terminal:
-
-    wow : Instantly attaches to the live worldserver tmux session.
-
-    auth : Instantly attaches to the authserver tmux session.
-
-    start : Quickly executes the start.sh script to boot up the server.
-
-    stop : Gracefully shuts down all running tmux server sessions (tmux kill-server).
-
-    compile : Run the full AzerothCore compilation (./acore.sh compiler all).
-
-    build : Run the core build process (./acore.sh compiler build).
-
-    update : Pulls the latest updates from the main repository and Playerbots.
-
-    updatemods : Automatically update all your custom modules in one command.
-
-    pb : Directly edit playerbots.conf using nano.
-
-    world : Directly edit worldserver.conf using nano.
-
-    ah : Direct shortcut to quickly edit mod_ahbot.conf using nano.
-
-    qqq : Instant server shutdown (debian) shortcut (sudo shutdown now).      
-
 i follow this guide https://youtu.be/UG900F19GPk. Thank you, nirv!
