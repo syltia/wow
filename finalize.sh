@@ -49,7 +49,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo "==> Launching server..."
-    /root/start.sh
+    bash /root/start.sh
 else
     echo "==> Launch canceled. You can type 'start' later when you are ready."
 fi
