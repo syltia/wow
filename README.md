@@ -30,63 +30,62 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * Runs the dependency installer (`./acore.sh install-deps`) and triggers the full compilation process.
   * *Note*: After compilation, you still need to configure your databases, set up your AHBot accounts, and finalize the server setup.
 
-  # ==========================================
-# 0. DOWNLOAD THE GAME CLIENT (RECOMMENDED FIRST)
-# ==========================================
-# Download the WotLK 3.3.5a client (17GB) from ChromieCraft and extract it to your fastest drive:
-# https://www.chromiecraft.com/en/downloads/
-# (Doing this now lets it download while you handle the server setup below!)
+ * **0. Download the Game Client (Recommended First)**
+  * Download the WotLK 3.3.5a client (17GB) from ChromieCraft and extract it to your fastest drive: [ChromieCraft Downloads](https://www.chromiecraft.com/en/downloads/)
+  * *(Doing this now lets it download while you handle the server setup below!)*
 
-# ==========================================
-# 1. CONFIGURE REALM NAME & IP ADDRESS
-# ==========================================
-sudo mysql -u root
-use acore_auth;
-UPDATE realmlist SET name = 'My Realm Name' WHERE id = 1;
-# For local LAN play, use your server's local IP (e.g., 192.168.1.250).
-# For internet/multiplayer play so friends can join, get your external IP with 'curl ipv4.icanhazip.com' and use that instead:
-UPDATE realmlist SET address = 'YOUR_SERVER_IP' WHERE id = 1;
-exit;
+* **1. Configure Realm Name & IP Address**
+  * Run these commands in your server terminal:
+    ```bash
+    sudo mysql -u root
+    use acore_auth;
+    UPDATE realmlist SET name = 'My Realm Name' WHERE id = 1;
+    ```
+  * For local LAN play, use your server's local IP (e.g., `192.168.1.250`).
+  * For internet/multiplayer play so friends can join, get your external IP with `curl ipv4.icanhazip.com` and use that instead.
+    ```bash
+    UPDATE realmlist SET address = 'YOUR_SERVER_IP' WHERE id = 1;
+    exit;
+    ```
 
-# ==========================================
-# 1.1 ROUTER PORT FORWARDING (FOR INTERNET PLAY ONLY)
-# ==========================================
-# If you want friends anywhere in the world to connect to your server, you must open and port-forward 
-# the following two ports in your router settings to your server's local IP address:
-# - 3724 TCP (AUTH)
-# - 8085 TCP (WORLD)
-# (Not required if you are only playing on your local network / LAN)
+* **1.1 Router Port Forwarding (For Internet Play Only)**
+  * If you want friends anywhere in the world to connect to your server, you must open and port-forward the following two ports in your router settings to your server's local IP address:
+    * `3724 TCP` (AUTH)
+    * `8085 TCP` (WORLD)
+  * *(Not required if you are only playing on your local network / LAN)*
 
-# ==========================================
-# 2. CREATE YOUR ADMIN / GM ACCOUNT
-# ==========================================
-# Start the server if not running, then create your account and grant GM status
-start
-wow
-account create <your_username> <your_password>
-account set gmlevel <your_username> 3 -1
+* **2. Create Your Admin / GM Account**
+  * Start the server if not running, then create your account and grant GM status:
+    ```bash
+    start
+    wow
+    account create <your_username> <your_password>
+    account set gmlevel <your_username> 3 -1
+    ```
 
-# ==========================================
-# 3. SET UP THE AUCTION HOUSE BOT (AHBOT)
-# ==========================================
-# Copy the AHBot configuration file first:
-cp ~/azerothcore-wotlk/env/dist/etc/modules/mod_ahbot.conf.dist ~/azerothcore-wotlk/env/dist/etc/modules/mod_ahbot.conf
-
-# Create a dedicated account for the AHBot seller[cite: 1]
-account create ahbot password
-
-# (Log into this account in-game, create your character to act as the seller, then log out)[cite: 1]
-# Retrieve your character's GUID[cite: 1]:
-lookup player account ahbot
-
-# Open the AHBot config file[cite: 1]:
-ah
-
-# INSIDE THE AHBOT CONFIG FILE (ah)[cite: 1]:
-# - Find and set: AuctionHouseBot.EnableSeller = 1
-# - Find and set: AuctionHouseBot.EnableBuyer = 1
-# - Set items per cycle: AuctionHouseBot.ItemsPerCycle = 575
-# - Enter your character's GUID found earlier.
-# (Save with CTRL+S, exit with CTRL+X)[cite: 1]
+* **3. Set Up the Auction House Bot (AHBot)**
+  * Copy the AHBot configuration file first:
+    ```bash
+    cp ~/azerothcore-wotlk/env/dist/etc/modules/mod_ahbot.conf.dist ~/azerothcore-wotlk/env/dist/etc/modules/mod_ahbot.conf
+    ```
+  * Create a dedicated account for the AHBot seller:
+    ```bash
+    account create ahbot password
+    ```
+  * *(Log into this account in-game, create your character to act as the seller, then log out).*
+  * Retrieve your character's GUID:
+    ```bash
+    lookup player account ahbot
+    ```
+  * Open the AHBot config file:
+    ```bash
+    ah
+    ```
+  * **Inside the AHBot config file (`ah`)**:
+    * Find and set: `AuctionHouseBot.EnableSeller = 1`
+    * Find and set: `AuctionHouseBot.EnableBuyer = 1`
+    * Set items per cycle: `AuctionHouseBot.ItemsPerCycle = 575`
+    * Enter your character's GUID found earlier.
+    * *(Save with `CTRL+S`, exit with `CTRL+X`)*
 
 i follow this guide https://youtu.be/UG900F19GPk. Thank you, nirv!
