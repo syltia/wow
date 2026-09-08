@@ -26,9 +26,10 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * `update`: Pulls the latest updates from the main repository and Playerbots.
   * `pb`, `world`, `ah`: Direct shortcuts to quickly edit configuration files (`playerbots.conf`, `worldserver.conf`, `mod_ahbot.conf`) using `nano`.
   * `qqq`: Instant server shutdown (debian) shortcut (`sudo shutdown now`).
-* **Compilation & Next Steps**: 
-  * Runs the dependency installer (`./acore.sh install-deps`) and triggers the full compilation process.
-  * *Note*: After compilation, you still need to configure your databases, set up your AHBot accounts, and finalize the server setup.
+   
+* **Compilation & Manual Post-Setup Steps:**
+  * The script automatically handles the dependency installation (`./acore.sh install-deps`) and triggers the full compilation process.
+  * Once the automated script finishes compiling, follow the manual steps below to configure your databases, set up your accounts, and launch the server.
 
  * **0. Download the Game Client (Recommended First)**
   * Download the WotLK 3.3.5a client (17GB) from ChromieCraft and extract it to your fastest drive: [ChromieCraft Downloads](https://www.chromiecraft.com/en/downloads/)
