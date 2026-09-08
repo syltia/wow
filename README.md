@@ -28,7 +28,7 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * `qqq`: Instant server shutdown (debian) shortcut (`sudo shutdown now`).
    
 * **Compilation & Manual Post-Setup Steps:**
-  * The script automatically handles the dependency installation (`./acore.sh install-deps`) and triggers the full compilation process.
+  * The script automatically handles the dependency installation (`./acore.sh install-deps`) and triggers the full compilation process (press **y** if prompted during the process).
   * Once the automated script finishes compiling, follow the manual steps below to configure your databases, set up your accounts, and launch the server.
 
  * **0. Download the Game Client (Recommended First)**
