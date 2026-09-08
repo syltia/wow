@@ -58,7 +58,10 @@ git submodule add -f https://github.com/jrad7/mod-dungeon-clear modules/mod-dung
 git submodule add -f https://github.com/Wishmaster117/mod-multibot-bridge modules/mod-multibot-bridge
 git submodule add -f https://github.com/azerothcore/mod-account-mounts modules/mod-account-mounts
 
-echo "--- 7. Creating startup script and aliases ---"
+echo "--- 7. Downloading finalize script ---"
+curl -o /root/finalize.sh https://raw.githubusercontent.com/syltia/wow/main/finalize.sh && chmod +x /root/finalize.sh
+
+echo "--- 8. Creating startup script and aliases ---"
 cat << 'EOF' > /root/start.sh
 cd ~/azerothcore-wotlk/env/dist/bin
 authserver="./authserver"
@@ -132,7 +135,7 @@ EOF
 
 source ~/.bashrc
 
-echo "--- 8. Running AzerothCore dependencies script ---"
+echo "--- 9. Running AzerothCore dependencies script ---"
 cd ~/azerothcore-wotlk
 ./acore.sh install-deps
 
