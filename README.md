@@ -4,7 +4,7 @@
 ```bash
  ./setup.sh
  ```
-apt install git curl unzip p7zip-full sudo tmux net-netools php php-mysqli -y
+Then;
 ```bash
  apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
  ```
