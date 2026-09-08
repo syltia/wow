@@ -25,7 +25,7 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * `compile` / `build`: Shortcuts to compile or rebuild the server via `./acore.sh`.
   * `update`: Pulls the latest updates from the main repository and Playerbots.
   * `pb`, `world`, `ah`: Direct shortcuts to quickly edit configuration files (`playerbots.conf`, `worldserver.conf`, `mod_ahbot.conf`) using `nano`.
-  * `qqq`: Instant server shutdown shortcut (`sudo shutdown now`).
+  * `qqq`: Instant server shutdown (debian) shortcut (`sudo shutdown now`).
 * **Compilation & Next Steps**: 
   * Runs the dependency installer (`./acore.sh install-deps`) and triggers the full compilation process.
   * *Note*: After compilation, you still need to configure your databases, set up your AHBot accounts, and finalize the server setup.
