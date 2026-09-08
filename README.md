@@ -2,6 +2,9 @@
 
  ## Prerequisites
     You must be connected as root.
+    ```bash
+     ```
+apt install git curl unzip p7zip-full sudo tmux net-netools php php-mysqli -y
 ```bash
  apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli -y
  ```
