@@ -19,7 +19,7 @@ i made a personnal script for install azerothcore and compile when finish. This 
   * Generates a `/root/start.sh` script that automatically launches both the `authserver` and `worldserver` inside isolated `tmux` sessions (`auth-session` and `world-session`).
 * **Custom Bash Aliases**: Configures useful shortcuts in `.bashrc` for daily management:
   * `wow`: Instantly attaches to the live `worldserver` `tmux` session.
-  * `auth`: Instantly attaches to the `authserver` `tmux` session.
+  * `auth`: Instantly attaches to the `authserver` `tmux` session. *(And you can see the auth server any time it's running by typing `auth`. This isn't really necessary for most cases and you shouldn't need to go in here.)*
   * `start`: Quickly executes the `start.sh` script to boot up the server.
   * `stop`: Gracefully shuts down all running `tmux` server sessions (`tmux kill-server`).
   * `compile` / `build`: Shortcuts to compile or rebuild the server via `./acore.sh`.
@@ -34,6 +34,7 @@ i made a personnal script for install azerothcore and compile when finish. This 
     cd /root
     ./finalize.sh
     ```
+  * **Important:** Once `finalize.sh` has completed its work, you must start the server before doing the next configuration steps.
   * Then follow the manual steps below to configure your databases, set up your accounts, and launch the server.
 
 * **0. Download the Game Client (Recommended First)**
