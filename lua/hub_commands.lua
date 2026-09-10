@@ -140,27 +140,34 @@ local function GoBack(player)
 end
 
 local LOGIN_NOTICE = "Commandes : .hub pour rejoindre le hub des services - .retour pour revenir a ta position precedente."
-local loginNoticePending = {}
+
+-- Delai (en ms) avant l'affichage du message de connexion.
+-- PLAYER_EVENT_ON_LOGIN se declenche avant que le client ait fini de charger
+-- le monde : envoyer SendNotification/SendAreaTriggerMessage immediatement
+-- ne s'affiche donc pas (le client n'est pas encore pret a les recevoir).
+-- On attend quelques secondes pour laisser le temps au chargement.
+local LOGIN_NOTICE_DELAY = 3000
 
 local function ShowLoginNotice(player)
-    -- Deux affichages differents pour etre difficile a rater.
+    if not player or not player:IsInWorld() then
+        return
+    end
+
+    -- Trois canaux differents pour etre difficile a rater : chat, notification
+    -- systeme (texte rouge/jaune en haut) et message au centre de l'ecran.
+    Msg(player, LOGIN_NOTICE)
     player:SendNotification(LOGIN_NOTICE)
     player:SendAreaTriggerMessage(LOGIN_NOTICE)
-    loginNoticePending[player:GetGUIDLow()] = nil
 end
 
 local function OnLogin(event, player)
-    -- On marque le joueur, puis on tente tout de suite.
-    loginNoticePending[player:GetGUIDLow()] = true
-    ShowLoginNotice(player)
-end
-
-local function OnMapReady(event, player)
-    -- Fallback : si le client vient juste d'entrer dans le monde,
-    -- on renvoie le message au premier changement de map.
-    if loginNoticePending[player:GetGUIDLow()] then
-        ShowLoginNotice(player)
-    end
+    -- On programme l'affichage plutot que de l'envoyer tout de suite,
+    -- pour laisser le temps au client de finir de charger le monde.
+    -- player:RegisterEvent annule automatiquement le timer si le joueur
+    -- se deconnecte avant l'echeance.
+    player:RegisterEvent(function(eventId, delay, calls, plr)
+        ShowLoginNotice(plr)
+    end, LOGIN_NOTICE_DELAY, 1)
 end
 
 local function OnCommand(event, player, command)
@@ -182,7 +189,6 @@ local function OnCommand(event, player, command)
 end
 
 RegisterPlayerEvent(PLAYER_EVENT_ON_LOGIN, OnLogin)
-RegisterPlayerEvent(28, OnMapReady) -- PLAYER_EVENT_ON_MAP_CHANGE
 RegisterPlayerEvent(PLAYER_EVENT_ON_COMMAND, OnCommand)
 
-PrintInfo("=== HUB COMMANDS V6 - LOGIN NOTIFICATION - .hub / .retour - CHARGE ===")
+PrintInfo("=== HUB COMMANDS V7 - LOGIN NOTIFICATION DIFFEREE - .hub / .retour - CHARGE ===")
