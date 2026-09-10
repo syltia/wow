@@ -14,6 +14,9 @@ i made a personnal script for install azerothcore and compile when finish. This 
 
 Also, you can easily update AzerothCore and Playerbots by typing update, and update all your custom modules at once using updatemods!
 
+### Custom Lua scripts
+Server-side ALE/Eluna scripts are stored in the `lua/` folder.
+
 ### Features & Automation
 * **System & Dependencies**: Updates Debian and installs all required packages.
 * **SSH & GRUB Optimization**: 
