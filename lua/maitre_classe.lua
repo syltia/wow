@@ -1,139 +1,414 @@
--- =========================================================
--- MAITRE DE CLASSE - NPC 90001 - V5 SIMPLE
--- AzerothCore 3.3.5a + ALE/Eluna
--- Apprend les sorts du trainer de classe jusqu'au niveau du joueur,
--- facture MoneyCost, affiche le coût restant jusqu'au niveau 80,
--- et permet de réinitialiser les talents.
--- =========================================================
-
 local NPC_ENTRY = 90001
-local LEARN = 1
-local RESET_TALENTS = 2
-local CLOSE = 999
 
-local TRAINER_BY_CLASS = {
-    [1]  = 1,  -- Warrior
-    [2]  = 3,  -- Paladin
-    [3]  = 7,  -- Hunter
-    [4]  = 9,  -- Rogue
-    [5]  = 11, -- Priest
-    [6]  = 13, -- Death Knight
-    [7]  = 14, -- Shaman
-    [8]  = 16, -- Mage
-    [9]  = 31, -- Warlock
-    [11] = 33, -- Druid
-}
+local MENU_LEARN = 101
+local MENU_REMAINING = 102
+local MENU_RESET = 103
+local MENU_CONFIRM = 201
+local MENU_BACK = 202
+local MENU_CLOSE = 999
 
-local function MoneyText(copper)
-    copper = math.max(0, tonumber(copper) or 0)
+
+local function FormatMoney(copper)
+
     local gold = math.floor(copper / 10000)
     local silver = math.floor((copper % 10000) / 100)
-    local cop = copper % 100
-    local parts = {}
-    if gold > 0 then table.insert(parts, gold .. "o") end
-    if silver > 0 then table.insert(parts, silver .. "a") end
-    if cop > 0 or #parts == 0 then table.insert(parts, cop .. "c") end
-    return table.concat(parts, " ")
+    local bronze = copper % 100
+
+    local text = ""
+
+    if gold > 0 then
+        text = text .. gold .. "g "
+    end
+
+    if silver > 0 then
+        text = text .. silver .. "s "
+    end
+
+    if bronze > 0 then
+        text = text .. bronze .. "c"
+    end
+
+    if text == "" then
+        return "Gratuit"
+    end
+
+    return text
 end
 
-local function QueryTrainerSpells(trainerId, maxLevel)
-    return WorldDBQuery(string.format([[
-        SELECT SpellId, MoneyCost, ReqLevel
-        FROM trainer_spell
-        WHERE TrainerId = %u
-          AND ReqLevel <= %u
-          AND (ReqAbility1 = 0 OR ReqAbility1 IS NULL)
-          AND (ReqAbility2 = 0 OR ReqAbility2 IS NULL)
-          AND (ReqAbility3 = 0 OR ReqAbility3 IS NULL)
-        ORDER BY ReqLevel, SpellId
-    ]], trainerId, maxLevel))
-end
 
-local function CostForMissing(player, trainerId, maxLevel)
-    local q = QueryTrainerSpells(trainerId, maxLevel)
-    if not q then return 0 end
-    local total = 0
+local function GetSpells(player, maxLevel)
+
+    local classId = player:GetClass()
+
+    local sql =
+        "SELECT DISTINCT " ..
+        "ts.SpellId, " ..
+        "ts.MoneyCost, " ..
+        "ts.ReqLevel, " ..
+        "ts.ReqSkillLine, " ..
+        "ts.ReqSkillRank, " ..
+        "ts.ReqAbility1, " ..
+        "ts.ReqAbility2, " ..
+        "ts.ReqAbility3 " ..
+        "FROM trainer t " ..
+        "JOIN trainer_spell ts ON ts.TrainerId = t.Id " ..
+        "WHERE t.Type = 0 " ..
+        "AND t.Requirement = " .. classId .. " " ..
+        "AND ts.ReqLevel <= " .. maxLevel .. " " ..
+        "ORDER BY ts.ReqLevel, ts.SpellId"
+
+    local query = WorldDBQuery(sql)
+
+    if not query then
+        return {}
+    end
+
+    local spells = {}
+
     repeat
-        local spell = q:GetUInt32(0)
-        local cost = q:GetUInt32(1)
-        if spell > 0 and not player:HasSpell(spell) then
-            total = total + cost
+
+        table.insert(spells, {
+            id = query:GetUInt32(0),
+            cost = query:GetUInt32(1),
+            level = query:GetUInt32(2),
+            skill = query:GetUInt32(3),
+            skillRank = query:GetUInt32(4),
+            req1 = query:GetUInt32(5),
+            req2 = query:GetUInt32(6),
+            req3 = query:GetUInt32(7)
+        })
+
+    until not query:NextRow()
+
+    return spells
+end
+
+
+local function HasRequirements(player, spell, planned)
+
+    if spell.skill ~= 0 then
+
+        if not player:HasSkill(spell.skill) then
+            return false
         end
-    until not q:NextRow()
+
+        if player:GetSkillValue(spell.skill) < spell.skillRank then
+            return false
+        end
+
+    end
+
+
+    if spell.req1 ~= 0 then
+        if not player:HasSpell(spell.req1) and not planned[spell.req1] then
+            return false
+        end
+    end
+
+    if spell.req2 ~= 0 then
+        if not player:HasSpell(spell.req2) and not planned[spell.req2] then
+            return false
+        end
+    end
+
+    if spell.req3 ~= 0 then
+        if not player:HasSpell(spell.req3) and not planned[spell.req3] then
+            return false
+        end
+    end
+
+    return true
+end
+
+
+local function GetLearningPlan(player)
+
+    local spells = GetSpells(player, player:GetLevel())
+
+    local plan = {}
+    local planned = {}
+
+    local changed = true
+
+    while changed do
+
+        changed = false
+
+        for _, spell in ipairs(spells) do
+
+            if not player:HasSpell(spell.id)
+                and not planned[spell.id]
+                and HasRequirements(player, spell, planned) then
+
+                planned[spell.id] = true
+                table.insert(plan, spell)
+                changed = true
+
+            end
+        end
+    end
+
+    return plan
+end
+
+
+local function GetTotalCost(plan)
+
+    local total = 0
+
+    for _, spell in ipairs(plan) do
+        total = total + spell.cost
+    end
+
     return total
 end
 
-local function LearnAvailable(player, trainerId)
-    local q = QueryTrainerSpells(trainerId, player:GetLevel())
-    if not q then
-        player:SendBroadcastMessage("Aucun sort disponible.")
-        return
-    end
 
-    local learned, spent = 0, 0
-    repeat
-        local spell = q:GetUInt32(0)
-        local cost = q:GetUInt32(1)
-        if spell > 0 and not player:HasSpell(spell) then
-            if player:GetCoinage() >= cost then
-                player:ModifyMoney(-cost)
-                player:LearnSpell(spell)
-                learned = learned + 1
-                spent = spent + cost
-            else
-                player:SendBroadcastMessage("Pas assez d'argent pour apprendre tous les sorts disponibles.")
-                break
-            end
-        end
-    until not q:NextRow()
+local function ShowMainMenu(player, creature)
 
-    if learned > 0 then
-        player:SendBroadcastMessage(string.format("%u sort(s) appris pour %s.", learned, MoneyText(spent)))
-    else
-        player:SendBroadcastMessage("Tu connais déjà tous les sorts disponibles à ton niveau.")
-    end
-end
-
-local function OnHello(event, player, creature)
     player:GossipClearMenu()
 
-    local trainerId = TRAINER_BY_CLASS[player:GetClass()]
-    if not trainerId then
-        player:GossipMenuAddItem(0, "Classe non prise en charge.", 0, CLOSE)
-        player:GossipMenuAddItem(0, "|cffff0000Fermer|r", 0, CLOSE)
-        player:GossipSendMenu(1, creature)
-        return
-    end
+    player:GossipMenuAddItem(
+        0,
+        "Apprendre mes sorts disponibles",
+        0,
+        MENU_LEARN
+    )
 
-    local currentCost = CostForMissing(player, trainerId, player:GetLevel())
-    local remaining80 = CostForMissing(player, trainerId, 80)
+    player:GossipMenuAddItem(
+        0,
+        "Voir le cout restant jusqu'au niveau 80",
+        0,
+        MENU_REMAINING
+    )
 
-    player:GossipMenuAddItem(0, "Apprendre les sorts disponibles (" .. MoneyText(currentCost) .. ")", 0, LEARN)
-    player:GossipMenuAddItem(0, "Coût restant jusqu'au niveau 80 : " .. MoneyText(remaining80), 0, CLOSE)
-    player:GossipMenuAddItem(0, "Réinitialiser mes talents", 0, RESET_TALENTS)
-    player:GossipMenuAddItem(0, "|cffff0000Fermer|r", 0, CLOSE)
+    player:GossipMenuAddItem(
+        0,
+        "Reinitialiser mes talents",
+        0,
+        MENU_RESET
+    )
+
+    player:GossipMenuAddItem(
+        0,
+        "|cffff0000Fermer|r",
+        0,
+        MENU_CLOSE
+    )
+
     player:GossipSendMenu(1, creature)
 end
 
-local function OnSelect(event, player, creature, sender, intid, code)
-    local trainerId = TRAINER_BY_CLASS[player:GetClass()]
 
-    if intid == CLOSE then
+local function ShowLearnMenu(player, creature)
+
+    local plan = GetLearningPlan(player)
+
+    if #plan == 0 then
+
+        player:SendBroadcastMessage(
+            "|cffff9900[Maitre de Classe]|r Vous connaissez deja tous les sorts disponibles pour votre niveau."
+        )
+
         player:GossipComplete()
         return
-    elseif intid == LEARN and trainerId then
-        LearnAvailable(player, trainerId)
-        OnHello(event, player, creature)
+    end
+
+    local cost = GetTotalCost(plan)
+
+    player:SendBroadcastMessage(
+        "|cff00ccff[Maitre de Classe]|r "
+        .. #plan
+        .. " sort(s) disponible(s)."
+    )
+
+    player:SendBroadcastMessage(
+        "|cffffff00Cout total : "
+        .. FormatMoney(cost)
+        .. "|r"
+    )
+
+
+    player:GossipClearMenu()
+
+    player:GossipMenuAddItem(
+        0,
+        "|cff00ff00Confirmer - "
+        .. FormatMoney(cost)
+        .. "|r",
+        0,
+        MENU_CONFIRM
+    )
+
+    player:GossipMenuAddItem(
+        0,
+        "Retour",
+        0,
+        MENU_BACK
+    )
+
+    player:GossipSendMenu(1, creature)
+end
+
+
+local function LearnSpells(player)
+
+    local plan = GetLearningPlan(player)
+
+    if #plan == 0 then
+        player:GossipComplete()
         return
-    elseif intid == RESET_TALENTS then
-        player:ResetTalents(true)
-        player:SendBroadcastMessage("Talents réinitialisés.")
-        OnHello(event, player, creature)
+    end
+
+    local cost = GetTotalCost(plan)
+    local money = player:GetCoinage()
+
+
+    if money < cost then
+
+        local missing = cost - money
+
+        player:SendBroadcastMessage(
+            "|cffff0000[Maitre de Classe]|r Vous n'avez pas assez d'argent."
+        )
+
+        player:SendBroadcastMessage(
+            "|cffff6600Il vous manque : "
+            .. FormatMoney(missing)
+            .. "|r"
+        )
+
+        player:GossipComplete()
         return
+    end
+
+
+    local learned = 0
+    local paid = 0
+
+
+    for _, spell in ipairs(plan) do
+
+        if not player:HasSpell(spell.id) then
+
+            player:LearnSpell(spell.id)
+
+            if player:HasSpell(spell.id) then
+                learned = learned + 1
+                paid = paid + spell.cost
+            end
+
+        end
+    end
+
+
+    if paid > 0 then
+        player:ModifyMoney(-paid)
+    end
+
+
+    player:SendBroadcastMessage(
+        "|cff00ff00[Maitre de Classe]|r "
+        .. learned
+        .. " sort(s) appris."
+    )
+
+    player:SendBroadcastMessage(
+        "|cffffff00Montant paye : "
+        .. FormatMoney(paid)
+        .. "|r"
+    )
+
+    player:GossipComplete()
+end
+
+
+local function ShowRemaining(player)
+
+    local spells = GetSpells(player, 80)
+
+    local count = 0
+    local cost = 0
+
+
+    for _, spell in ipairs(spells) do
+
+        if not player:HasSpell(spell.id) then
+
+            count = count + 1
+            cost = cost + spell.cost
+
+        end
+    end
+
+
+    if count == 0 then
+
+        player:SendBroadcastMessage(
+            "|cff00ff00[Maitre de Classe]|r Tous les sorts jusqu'au niveau 80 sont connus."
+        )
+
+    else
+
+        player:SendBroadcastMessage(
+            "|cff00ccff[Maitre de Classe]|r "
+            .. count
+            .. " sort(s) restant(s) jusqu'au niveau 80."
+        )
+
+        player:SendBroadcastMessage(
+            "|cffffff00Cout restant : "
+            .. FormatMoney(cost)
+            .. "|r"
+        )
+
     end
 
     player:GossipComplete()
 end
+
+
+local function OnHello(event, player, creature)
+
+    ShowMainMenu(player, creature)
+end
+
+
+local function OnSelect(event, player, creature, sender, intid, code)
+
+    if intid == MENU_LEARN then
+
+        ShowLearnMenu(player, creature)
+
+    elseif intid == MENU_REMAINING then
+
+        ShowRemaining(player)
+
+    elseif intid == MENU_CONFIRM then
+
+        LearnSpells(player)
+
+    elseif intid == MENU_RESET then
+
+        player:ResetTalents()
+
+        player:SendBroadcastMessage(
+            "|cff00ff00[Maitre de Classe]|r Vos talents ont ete reinitialises."
+        )
+
+        player:GossipComplete()
+
+    elseif intid == MENU_BACK then
+
+        ShowMainMenu(player, creature)
+
+    elseif intid == MENU_CLOSE then
+
+        player:GossipComplete()
+
+    end
+end
+
 
 RegisterCreatureGossipEvent(NPC_ENTRY, 1, OnHello)
 RegisterCreatureGossipEvent(NPC_ENTRY, 2, OnSelect)
