@@ -95,7 +95,11 @@ git submodule add -f https://github.com/Wishmaster117/mod-multibot-bridge module
 git submodule add -f https://github.com/azerothcore/mod-account-mounts modules/mod-account-mounts
 git submodule add -f https://github.com/azerothcore/eluna-ts modules/eluna-ts
 
-echo "--- 8. Création du script de démarrage et des alias ---"
+echo "--- 8. Téléchargement du script finalize.sh ---"
+curl -fL https://raw.githubusercontent.com/syltia/wow/main/finalize.sh -o /root/finalize.sh
+chmod +x /root/finalize.sh
+
+echo "--- 9. Création du script de démarrage et des alias ---"
 cat << 'EOF' > /root/start.sh
 #!/bin/bash
 
@@ -208,7 +212,7 @@ EOF
 
 source ~/.bashrc
 
-echo "--- 9. Lancement du script des dépendances d'AzerothCore ---"
+echo "--- 10. Lancement du script des dépendances d'AzerothCore ---"
 cd ~/azerothcore-wotlk
 ./acore.sh install-deps
 
