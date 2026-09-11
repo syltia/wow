@@ -1,40 +1,66 @@
 #!/bin/bash
 set -e
 
-echo "--- 1. Updating Debian and installing dependencies ---"
+echo "--- 1. Mise à jour de Debian et installation des dépendances ---"
 apt update && apt upgrade -y
+apt install git curl unzip p7zip-full sudo tmux net-tools php php-mysqli ufw -y
 
-if ! command -v ufw >/dev/null 2>&1; then
-    echo "--- Installing UFW ---"
-    apt install -y ufw
-else
-    echo "--- UFW is already installed ---"
-fi
-
-echo "--- Configuring UFW ---"
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow 22/tcp comment 'SSH'
-ufw allow 3724/tcp comment 'WoW Auth'
-ufw allow 8085/tcp comment 'WoW World'
-ufw --force enable
-ufw status verbose
-
-echo "--- 2. Configuring SSH ---"
+echo "--- 2. Configuration de SSH ---"
 sed -ie '0,/#PermitRootLogin prohibit-password/s/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 service sshd restart
 
-echo "--- 3. Configuring GRUB ---"
+
+echo "--- 3. Configuration du firewall UFW ---"
+
+# Bloque par défaut toutes les connexions entrantes.
+ufw default deny incoming
+
+# Autorise toutes les connexions sortantes du serveur.
+ufw default allow outgoing
+
+# SSH - nécessaire pour PuTTY / WinSCP.
+ufw allow 22/tcp comment 'SSH'
+
+# AzerothCore Authserver - connexion au serveur WoW.
+ufw allow 3724/tcp comment 'WoW Auth'
+
+# AzerothCore Worldserver - connexion au monde.
+ufw allow 8085/tcp comment 'WoW World'
+
+echo ""
+echo "Ports autorisés par UFW :"
+echo "  22/tcp   -> SSH / PuTTY / WinSCP"
+echo "  3724/tcp -> AzerothCore Authserver"
+echo "  8085/tcp -> AzerothCore Worldserver"
+echo ""
+
+echo "Activation du firewall UFW..."
+ufw --force enable
+
+echo ""
+echo "Attente de la prise en compte du firewall..."
+sleep 2
+
+echo ""
+echo "Statut du firewall :"
+ufw status verbose
+
+echo ""
+echo "UFW est activé et configuré."
+echo ""
+
+
+echo "--- 4. Configuration de GRUB ---"
 sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=1/' /etc/default/grub
 sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub
 update-grub
 
-echo "--- 4. Configuring Static IP ---"
+echo "--- 5. Configuration de l'IP Statique ---"
 INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2; exit}')
 CURRENT_IP=$(ip -4 addr show $INTERFACE | grep -oP '(?<=inet )\d+(\.\d+){3}')
 GATEWAY=$(ip route | grep default | awk '{print $3}')
 
-echo "Applying static IP: $CURRENT_IP on interface $INTERFACE (Gateway: $GATEWAY)"
+echo "Application de l'IP statique : $CURRENT_IP sur l'interface $INTERFACE (Passerelle : $GATEWAY)"
 
 cat <<EOF > /etc/network/interfaces
 source /etc/network/interfaces.d/*
@@ -48,68 +74,99 @@ iface $INTERFACE inet static
     netmask 255.255.255.0
     gateway $GATEWAY
     dns-domain azeroth.core
-    dns-nameservers 8.8.8.8
+    dns-nameservers $GATEWAY
 EOF
 
 systemctl restart networking.service
-until ping -c 1 github.com &>/dev/null; do
-    sleep 1
-done
 
-echo "--- 5. Cloning AzerothCore and main module ---"
+echo "--- 6. Clonage AzerothCore et module principal ---"
 cd ~
 git clone https://github.com/mod-playerbots/azerothcore-wotlk.git --branch=Playerbot
 
 cd ~/azerothcore-wotlk/modules
-if [ ! -d "mod-playerbots" ]; then
-    git clone https://github.com/mod-playerbots/mod-playerbots.git --branch=master
-fi 
+git clone https://github.com/mod-playerbots/mod-playerbots.git --branch=master
 
-echo "--- 6. Adding custom submodules ---"
+echo "--- 7. Ajout des sous-modules personnalisés ---"
 cd ~/azerothcore-wotlk
 git submodule add -f https://github.com/ZhengPeiRu21/mod-individual-progression modules/mod-individual-progression
 git submodule add -f https://github.com/azerothcore/mod-ah-bot modules/mod-ah-bot
 git submodule add -f https://github.com/jrad7/mod-dungeon-clear modules/mod-dungeon-clear
 git submodule add -f https://github.com/Wishmaster117/mod-multibot-bridge modules/mod-multibot-bridge
 git submodule add -f https://github.com/azerothcore/mod-account-mounts modules/mod-account-mounts
+git submodule add -f https://github.com/azerothcore/eluna-ts modules/eluna-ts
 
-echo "--- 7. Downloading finalize script ---"
-curl -o /root/finalize.sh https://raw.githubusercontent.com/syltia/wow/main/finalize.sh && chmod +x /root/finalize.sh
-
-echo "--- 8. Creating startup script and aliases ---"
+echo "--- 8. Création du script de démarrage et des alias ---"
 cat << 'EOF' > /root/start.sh
-cd ~/azerothcore-wotlk/env/dist/bin
+#!/bin/bash
+
+cd ~/azerothcore-wotlk/env/dist/bin || exit 1
+
 authserver="./authserver"
 worldserver="./worldserver"
 
 authserver_session="auth-session"
 worldserver_session="world-session"
 
-if tmux new-session -d -s $authserver_session; then
+# =========================
+# AUTHSERVER
+# =========================
+
+if tmux has-session -t "$authserver_session" 2>/dev/null; then
+    echo "Authserver session already exists: $authserver_session"
+else
+    tmux new-session -d -s "$authserver_session"
+    tmux send-keys -t "$authserver_session" "$authserver" C-m
     echo "Created authserver session: $authserver_session"
-else
-    echo "Error when trying to create authserver session: $authserver_session"
 fi
 
-if tmux new-session -d -s $worldserver_session; then
+# =========================
+# WORLDSERVER
+# =========================
+
+start_worldserver()
+{
+    tmux send-keys -t "$worldserver_session" \
+'while true; do
+    ./worldserver
+    exit_code=$?
+
+    if [ "$exit_code" -eq 2 ]; then
+        echo
+        echo "Worldserver requested restart. Restarting..."
+        echo
+        sleep 2
+    else
+        echo
+        echo "Worldserver stopped with exit code $exit_code."
+        echo "Worldserver will remain stopped."
+        echo
+        break
+    fi
+done' C-m
+}
+
+if tmux has-session -t "$worldserver_session" 2>/dev/null; then
+
+    current_command=$(tmux display-message -p -t "$worldserver_session" '#{pane_current_command}')
+
+    if [ "$current_command" = "worldserver" ] || [ "$current_command" = "./worldserver" ]; then
+        echo "Worldserver is already running: $worldserver_session"
+    else
+        echo "Worldserver session exists but server is stopped."
+        echo "Starting worldserver..."
+        start_worldserver
+    fi
+
+else
+    tmux new-session -d -s "$worldserver_session"
     echo "Created worldserver session: $worldserver_session"
-else
-    echo "Error when trying to create worldserver session: $worldserver_session"
+
+    start_worldserver
 fi
 
-if tmux send-keys -t $authserver_session "$authserver" C-m; then
-    echo "Executed \"$authserver\" inside $authserver_session"
-    echo "You can attach to $authserver_session and check the result using \"tmux attach -t $authserver_session\""
-else
-    echo "Error when executing \"$authserver\" inside $authserver_session"
-fi
-
-if tmux send-keys -t $worldserver_session "$worldserver" C-m; then
-    echo "Executed \"$worldserver\" inside $worldserver_session"
-    echo "You can attach to $worldserver_session and check the result using \"tmux attach -t $worldserver_session\""
-else
-    echo "Error when executing \"$worldserver\" inside $worldserver_session"
-fi
+echo
+echo "Worldserver console : tmux attach -t $worldserver_session"
+echo "Authserver console  : tmux attach -t $authserver_session"
 EOF
 
 chmod +x /root/start.sh
@@ -134,6 +191,7 @@ cat << 'EOF' > ~/.bashrc
 # alias rm='rm -i'
 # alias cp='cp -i'
 # alias mv='mv -i'
+
 alias wow='cd ~/azerothcore-wotlk;tmux attach -t world-session'
 alias auth='cd ~/azerothcore-wotlk;tmux attach -t auth-session'
 alias start='bash /root/start.sh'
@@ -150,20 +208,20 @@ EOF
 
 source ~/.bashrc
 
-echo "--- 9. Running AzerothCore dependencies script ---"
+echo "--- 9. Lancement du script des dépendances d'AzerothCore ---"
 cd ~/azerothcore-wotlk
 ./acore.sh install-deps
 
 echo "=================================================================="
-echo "Preparation script completed! Your machine is ready."
+echo "Script de préparation terminé ! Votre machine est prête."
 echo "=================================================================="
 echo ""
 
-read -p "Do you want to run compilation now? (y/n) : " choice
+read -p "Voulez-vous lancer la compilation maintenant ? (o/n) : " choice
 if [[ "$choice" =~ ^[oO](ui)?$|[yY](es)?$ ]]; then
-    echo "Starting compilation..."
+    echo "Lancement de la compilation..."
     cd ~/azerothcore-wotlk
     ./acore.sh compiler all
 else
-    echo "Compilation skipped. You can run it later using the alias: compile"
+    echo "Compilation ignorée. Vous pourrez la lancer plus tard avec l'alias : compile"
 fi
