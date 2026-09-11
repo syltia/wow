@@ -1,34 +1,8 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
-if [ "${EUID}" -ne 0 ]; then
-    echo "This script must be run as root."
-    exit 1
-fi
-
-echo "--- 1. Updating Debian ---"
-apt update
-apt upgrade -y
-
-echo "--- 2. Installing base development tools ---"
-apt install -y \
-    build-essential \
-    cmake \
-    ninja-build \
-    clang \
-    lldb \
-    gdb \
-    git \
-    curl \
-    wget \
-    tmux \
-    pkg-config \
-    ca-certificates \
-    gnupg \
-    unzip \
-    zip \
-    libssl-dev \
-    zlib1g-dev
+echo "--- 1. Updating Debian and installing dependencies ---"
+apt update && apt upgrade -y
 
 if ! command -v ufw >/dev/null 2>&1; then
     echo "--- Installing UFW ---"
@@ -46,19 +20,19 @@ ufw allow 8085/tcp comment 'WoW World'
 ufw --force enable
 ufw status verbose
 
-echo "--- 3. Configuring SSH ---"
+echo "--- 2. Configuring SSH ---"
 sed -ie '0,/#PermitRootLogin prohibit-password/s/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 service sshd restart
 
-echo "--- 4. Configuring GRUB ---"
+echo "--- 3. Configuring GRUB ---"
 sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=1/' /etc/default/grub
 sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub
 update-grub
 
-echo "--- 5. Configuring Static IP ---"
+echo "--- 4. Configuring Static IP ---"
 INTERFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2; exit}')
-CURRENT_IP=$(ip -4 addr show "$INTERFACE" | grep -oP '(?<=inet )\d+(\.\d+){3}' | head -n1)
-GATEWAY=$(ip route | awk '/default/ {print $3; exit}')
+CURRENT_IP=$(ip -4 addr show $INTERFACE | grep -oP '(?<=inet )\d+(\.\d+){3}')
+GATEWAY=$(ip route | grep default | awk '{print $3}')
 
 echo "Applying static IP: $CURRENT_IP on interface $INTERFACE (Gateway: $GATEWAY)"
 
@@ -82,16 +56,16 @@ until ping -c 1 github.com &>/dev/null; do
     sleep 1
 done
 
-echo "--- 6. Cloning AzerothCore and main module ---"
+echo "--- 5. Cloning AzerothCore and main module ---"
 cd ~
 git clone https://github.com/mod-playerbots/azerothcore-wotlk.git --branch=Playerbot
 
 cd ~/azerothcore-wotlk/modules
 if [ ! -d "mod-playerbots" ]; then
     git clone https://github.com/mod-playerbots/mod-playerbots.git --branch=master
-fi
+fi 
 
-echo "--- 7. Adding custom submodules ---"
+echo "--- 6. Adding custom submodules ---"
 cd ~/azerothcore-wotlk
 git submodule add -f https://github.com/ZhengPeiRu21/mod-individual-progression modules/mod-individual-progression
 git submodule add -f https://github.com/azerothcore/mod-ah-bot modules/mod-ah-bot
@@ -99,10 +73,10 @@ git submodule add -f https://github.com/jrad7/mod-dungeon-clear modules/mod-dung
 git submodule add -f https://github.com/Wishmaster117/mod-multibot-bridge modules/mod-multibot-bridge
 git submodule add -f https://github.com/azerothcore/mod-account-mounts modules/mod-account-mounts
 
-echo "--- 8. Downloading finalize script ---"
+echo "--- 7. Downloading finalize script ---"
 curl -o /root/finalize.sh https://raw.githubusercontent.com/syltia/wow/main/finalize.sh && chmod +x /root/finalize.sh
 
-echo "--- 9. Creating startup script and aliases ---"
+echo "--- 8. Creating startup script and aliases ---"
 cat << 'EOF' > /root/start.sh
 cd ~/azerothcore-wotlk/env/dist/bin
 authserver="./authserver"
@@ -176,7 +150,7 @@ EOF
 
 source ~/.bashrc
 
-echo "--- 10. Running AzerothCore dependencies script ---"
+echo "--- 9. Running AzerothCore dependencies script ---"
 cd ~/azerothcore-wotlk
 ./acore.sh install-deps
 
