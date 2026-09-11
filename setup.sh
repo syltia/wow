@@ -4,6 +4,22 @@ set -e
 echo "--- 1. Updating Debian and installing dependencies ---"
 apt update && apt upgrade -y
 
+if ! command -v ufw >/dev/null 2>&1; then
+    echo "--- Installing UFW ---"
+    apt install -y ufw
+else
+    echo "--- UFW is already installed ---"
+fi
+
+echo "--- Configuring UFW ---"
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 22/tcp comment 'SSH'
+ufw allow 3724/tcp comment 'WoW Auth'
+ufw allow 8085/tcp comment 'WoW World'
+ufw --force enable
+ufw status verbose
+
 echo "--- 2. Configuring SSH ---"
 sed -ie '0,/#PermitRootLogin prohibit-password/s/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 service sshd restart
