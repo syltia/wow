@@ -42,17 +42,6 @@ Server-side ALE/Eluna scripts are stored in the `lua/` folder.
     * [`mod-account-mounts`](https://github.com/azerothcore/mod-account-mounts)
     * [`eluna-ts`](https://github.com/azerothcore/eluna-ts)
 
-  The setup currently adds them with:
-
-  ```bash
-  git submodule add -f https://github.com/ZhengPeiRu21/mod-individual-progression modules/mod-individual-progression
-  git submodule add -f https://github.com/azerothcore/mod-ah-bot modules/mod-ah-bot
-  git submodule add -f https://github.com/jrad7/mod-dungeon-clear modules/mod-dungeon-clear
-  git submodule add -f https://github.com/Wishmaster117/mod-multibot-bridge modules/mod-multibot-bridge
-  git submodule add -f https://github.com/azerothcore/mod-account-mounts modules/mod-account-mounts
-  git submodule add -f https://github.com/azerothcore/eluna-ts modules/eluna-ts
-  ```
-
 * **Server Management & `tmux` Integration**:
   * Generates a `/root/start.sh` script that automatically launches both the `authserver` and `worldserver` inside isolated `tmux` sessions (`auth-session` and `world-session`).
 * **Custom Bash Aliases**: Configures useful shortcuts in `.bashrc` for daily management:
